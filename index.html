@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Lab 3</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 10px; padding: 10px; }
+	#map { height: 80vh; }
+	#map2 { height: 80vh;}
+</style>
+</head>
+<body>
+	<h1> Bus Lines and Transfer Stations </h1>
+		<style>
+		#menu {
+			position: absolute;
+			background: #fff;
+			padding: 10px;
+			font-family: 'Open Sans', sans-serif;
+			}
+		.mapboxgl-popup {
+			max-width: 400px;
+			font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+			}
+		</style>
+
+<div id="map"></div>
+	<div id="menu">
+			<input
+			id="streets-v11"
+			type="radio"
+			name="rtoggle"
+			value="streets"
+			checked="checked"
+			/>
+	<label for="streets-v11">streets</label>
+	<input id="satellite-v9" type="radio" name="rtoggle" value="satellite" />
+	<label for="satellite-v9">satellite</label>
+	</div>
+<script>
+		mapboxgl.accessToken = 'pk.eyJ1Ijoicmdhc2NoZWwiLCJhIjoiY2toY25oNjkzMDQ3ODJyc2I1YWoyczk2bCJ9.pMf2mjeJHvfkdPM7jEAFCg';
+			var map = new mapboxgl.Map({
+			container: 'map',
+			style: 'mapbox://styles/mapbox/streets-v11',
+			center: [-122.448241, 47.240783],
+			zoom: 12,
+			maxZoom: 15,
+  		minZoom: 12
+				});
+				map.on('load', function(){
+				 map.addSource('busroute', {
+							 "type": "geojson",
+							 "data": "https://opendata.arcgis.com/datasets/4c4e92b1b357465fba1f507ac8d0f967_0.geojson"
+					 });
+					 map.addLayer({
+						 "id":"busrte",
+						 "type":"line",
+						 "source":"busroute",
+						 "paint":{
+							 "line-color": "red",
+						 }
+					 });
+			 });
+			 map.on('load', function(){
+				map.addSource('transitcenter', {
+							"type": "geojson",
+							"data": "https://opendata.arcgis.com/datasets/45638b2672f04e848b0181f8a521fcd6_0.geojson"
+					});
+					map.addLayer({
+						"id":"transitctr",
+						"type":"circle",
+						"source":"transitcenter",
+						"paint": {
+						      "circle-color": "blue",
+									"circle-radius": 10,
+						    }
+					});
+			});
+
+			var layerList = document.getElementById('menu');
+			var inputs = layerList.getElementsByTagName('input');
+
+			function switchLayer(layer) {
+			var layerId = layer.target.id;
+			map.setStyle('mapbox://styles/mapbox/' + layerId);
+			}
+
+			for (var i = 0; i < inputs.length; i++) {
+			inputs[i].onclick = switchLayer;
+			}
+			map.on('click', 'transitctr', function (e) {
+			new mapboxgl.Popup()
+			.setLngLat(e.lngLat)
+			.setHTML(e.features[0].properties.ProperCase)
+			.addTo(map);
+			});
+
+			// Change the cursor to a pointer when the mouse is over the states layer.
+			map.on('mouseenter', 'transitctr', function () {
+			map.getCanvas().style.cursor = 'pointer';
+			});
+
+			// Change it back to a pointer when it leaves.
+			map.on('mouseleave', 'transitctr', function () {
+			map.getCanvas().style.cursor = '';
+			});
+			map.on('load', function () {
+							map.loadImage(
+								'https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Pierce_Transit_C40LF.jpg/800px-Pierce_Transit_C40LF.jpg',
+								function (error, image) {
+									if (error) throw error;
+									map.addImage('PTL', image);
+									map.addSource('point', {
+										'type': 'geojson',
+										'data': {
+											'type': 'FeatureCollection',
+											'features': [
+												{
+													'type': 'Feature',
+													'geometry': {
+														'type': 'Point',
+														'coordinates': [-122.539214, 47.277599]
+													}
+												}
+											]
+										}
+									});
+							map.addLayer({
+								'id': 'points',
+								'type': 'symbol',
+								'source': 'point',
+								'layout': {
+									'icon-image': 'PTL',
+									'icon-size': .25
+								}
+								});
+								}
+								);
+								});
+</script>
+<br>
+<br>
+	<p> This map shows Pierce County Transit bus line coverage and transfer stations within the network.  The bus line and transit center data was sourced through the <a href="https://gis-piercetransit.opendata.arcgis.com/datasets/45638b2672f04e848b0181f8a521fcd6_0/geoservice?geometry=-123.686%2C47.069%2C-121.072%2C47.396." target="_blank"> Pierce Transit Geospatial Data Hub-Transit Centers</a> and <a href="https://gis-piercetransit.opendata.arcgis.com/datasets/bus-routes/data?geometry=-123.721%2C47.070%2C-121.108%2C47.396." target="_blank"> Pierce Transit Geospatial Data Hub-Bus Routes</a></p>
+		</div>
+
+		<!--Map2-->
+
+		<div>
+		<h1> Bus Stop Locator</h1>
+		<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
+		<link
+			rel="stylesheet"
+			href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css"
+			type="text/css"/>
+	<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
+	<div id='map2'</div>
+		<script>
+			mapboxgl.accessToken = 'pk.eyJ1Ijoicmdhc2NoZWwiLCJhIjoiY2toczU5d2NmMDY4cjJ6bjMycHA4cWdzNSJ9.iG9N7epdOW-3h0-07qA5tA';
+			var map2 = new mapboxgl.Map({
+			 container: 'map2',
+			 style: 'mapbox://styles/rgaschel/ckhs8dolv2qgi19qifbqvtbm7',
+			 center: [-122.448241, 47.240783],
+			 zoom: 12,
+ 			 maxZoom: 15,
+   		 minZoom: 12
+
+			});
+
+			map2.addControl(
+			new MapboxGeocoder({
+			accessToken: mapboxgl.accessToken,
+			mapboxgl: mapboxgl
+			})
+		);
+			 map2.on('load', function(){
+				map2.addSource('busstops', {
+							"type": "geojson",
+							"data": "https://opendata.arcgis.com/datasets/c47ede1b78b34fa1ab6ac6066c450702_0.geojson"
+					});
+					map2.addLayer({
+						"id":"bus",
+						"type":"circle",
+						"source":"busstops",
+						"paint": {
+							"circle-color": "#00FF00",
+							"circle-radius": 3
+						}
+
+
+					});
+			});
+			map2.on('load', function () {
+							map.loadImage(
+								'https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Pierce_Transit_C40LF.jpg/800px-Pierce_Transit_C40LF.jpg',
+								function (error, image) {
+									if (error) throw error;
+									map2.addImage('PTL', image);
+									map2.addSource('point', {
+										'type': 'geojson',
+										'data': {
+											'type': 'FeatureCollection',
+											'features': [
+												{
+													'type': 'Feature',
+													'geometry': {
+														'type': 'Point',
+														'coordinates': [-122.539214, 47.277599]
+													}
+												}
+											]
+										}
+									});
+							map2.addLayer({
+								'id': 'points',
+								'type': 'symbol',
+								'source': 'point',
+								'layout': {
+									'icon-image': 'PTL',
+									'icon-size': 0.25
+								}
+								});
+								}
+								);
+								});
+
+		</script>
+	</div>
+	<p> This map allows individuals to search a street address and view bus stops near their location. The bus stop data was sourced through the  <a href="https://gis-piercetransit.opendata.arcgis.com/datasets/bus-stops/geoservice?geometry=-125.000%2C47.042%2C-119.773%2C47.693." target="_blank"> Pierce Transit Geospatial Data Hub</a>. </p>
+	</body>
+	</html>
